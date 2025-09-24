@@ -1,11 +1,19 @@
+/* src/index.css */
 html,
 body,
 #root {
   height: 100%;
   margin: 0;
+  padding: 0;
   background: radial-gradient(ellipse at center, #020419 0%, #000 60%);
-  font-family: Inter, Roboto, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial;
+  font-family: 'Inter', 'Roboto', system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   color: #fff;
+  overflow: hidden;
+  user-select: none;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 #canvas-container {
@@ -17,6 +25,7 @@ body,
   touch-action: none;
 }
 
+/* UI Overlay base styles */
 .ui-overlay {
   position: fixed;
   z-index: 10;
@@ -36,4 +45,199 @@ body,
   margin: 4px 0 0 0;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* Intro Text Animations */
+.intro-overlay {
+  animation: fadeInOverlay 0.5s ease-out;
+}
+
+.intro-text {
+  animation: slideInFromTop 1s ease-out;
+}
+
+.intro-title {
+  animation: glowPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glowPulse {
+  from {
+    text-shadow:
+      0 0 5px rgba(255, 255, 255, 0.5),
+      0 0 10px rgba(255, 255, 255, 0.3),
+      0 0 15px rgba(124, 58, 237, 0.3);
+  }
+
+  to {
+    text-shadow:
+      0 0 10px rgba(255, 255, 255, 0.8),
+      0 0 20px rgba(255, 255, 255, 0.5),
+      0 0 30px rgba(124, 58, 237, 0.5),
+      0 0 40px rgba(124, 58, 237, 0.3);
+  }
+}
+
+/* Progress Indicator Enhancements */
+.progress-container {
+  animation: slideInFromRight 0.8s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Button Hover Effects */
+.control-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.control-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent);
+  transition: left 0.5s;
+}
+
+.control-button:hover::before {
+  left: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .intro-title {
+    font-size: clamp(1.5rem, 4vw, 2.5rem) !important;
+  }
+
+  .progress-container {
+    top: auto !important;
+    bottom: 120px !important;
+    left: 10px !important;
+    right: 10px !important;
+    min-width: unset !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ui-overlay {
+    left: 10px;
+    top: 10px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+}
+
+/* Loading States */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #7c3aed;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .control-button {
+    border: 2px solid white;
+    background: black;
+  }
+
+  .progress-container {
+    border: 2px solid white;
+    background: black;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+
+  .intro-title,
+  .intro-text,
+  .intro-overlay,
+  .progress-container,
+  .control-button::before {
+    animation: none;
+  }
+
+  * {
+    transition: none !important;
+  }
 }

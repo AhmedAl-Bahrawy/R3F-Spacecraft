@@ -1,5 +1,5 @@
 // src/components/EnhancedSpace.jsx
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import Star from "./Star";
@@ -29,9 +29,11 @@ export default function EnhancedSpace({ initialCamera = [0, 0, 12] }) {
 
   // State management
   const [showIntro, setShowIntro] = useState(true);
-  const [cameraMode, setCameraMode] = useState("orbit"); // 'orbit', 'follow', 'path'
+  const [cameraMode, setCameraMode] = useState("orbit");
   const [pathProgress, setPathProgress] = useState(0);
-  const [showPathVisualizer, setShowPathVisualizer] = useState(false);
+  
+  const [autoTransitionTimer, setAutoTransitionTimer] = useState(null);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   // Nebula configurations (keeping original setup)
   const nebulaConfigs = [
@@ -58,15 +60,60 @@ export default function EnhancedSpace({ initialCamera = [0, 0, 12] }) {
     },
   ];
 
-  // Handle intro completion
+  // Handle intro completion and start auto-transition timer
   const handleIntroComplete = useCallback(() => {
     setShowIntro(false);
-  }, []);
 
-  // Handle progress change from scroll controller
-  const handleProgressChange = useCallback((progress) => {
-    setPathProgress(progress);
-  }, []);
+    // Start 10-second timer for automatic transition to path mode
+    const timer = setTimeout(() => {
+      if (!hasScrolled) {
+        setCameraMode("path");
+      }
+    }, 10000);
+
+    setAutoTransitionTimer(timer);
+  }, [hasScrolled]);
+
+  // Handle progress change and detect first scroll
+  const handleProgressChange = useCallback(
+    (progress) => {
+      if (!hasScrolled) {
+        setHasScrolled(true);
+        setCameraMode("path");
+
+        // Clear auto-transition timer since user scrolled
+        if (autoTransitionTimer) {
+          clearTimeout(autoTransitionTimer);
+          setAutoTransitionTimer(null);
+        }
+      }
+      setPathProgress(progress);
+    },
+    [hasScrolled, autoTransitionTimer]
+  );
+
+  // Handle scroll events globally to detect when user starts scrolling
+  useEffect(() => {
+    const handleGlobalScroll = () => {
+      if (!hasScrolled && !showIntro) {
+        handleProgressChange(pathProgress);
+      }
+    };
+
+    window.addEventListener("wheel", handleGlobalScroll);
+    return () => {
+      window.removeEventListener("wheel", handleGlobalScroll);
+      if (autoTransitionTimer) {
+        clearTimeout(autoTransitionTimer);
+      }
+    };
+  }, [
+    hasScrolled,
+    showIntro,
+    pathProgress,
+    handleProgressChange,
+    autoTransitionTimer,
+  ]);
 
   // Handle camera mode change
   const handleCameraModeChange = useCallback(() => {
@@ -80,10 +127,7 @@ export default function EnhancedSpace({ initialCamera = [0, 0, 12] }) {
     }
   }, [cameraMode]);
 
-  // Handle path visualizer toggle
-  const togglePathVisualizer = useCallback(() => {
-    setShowPathVisualizer((prev) => !prev);
-  }, []);
+  
 
   return (
     <div id="canvas-container">
@@ -142,23 +186,28 @@ export default function EnhancedSpace({ initialCamera = [0, 0, 12] }) {
         {/* Enhanced Spaceship */}
         <EnhancedSpaceship ref={shipRef} isPathMode={cameraMode === "path"} />
 
-        {/* Path Visualizer */}
-        <PathVisualizer
-          progress={pathProgress}
-          visible={showPathVisualizer && cameraMode === "path"}
-        />
+        {cameraMode === "path" && <PathVisualizer />}
       </Canvas>
 
       {/* UI Overlays */}
-      <IntroText
-        isVisible={showIntro && cameraMode !== "path"}
-        onComplete={handleIntroComplete}
-      />
+      <IntroText isVisible={showIntro} onComplete={handleIntroComplete} />
 
       <ProgressIndicator
         progress={pathProgress}
         isVisible={cameraMode === "path"}
       />
+
+      {/* Status Indicator */}
+      {!showIntro && cameraMode === "orbit" && !hasScrolled && (
+        <div className="status-indicator">
+          <p>🎮 Free Camera Mode</p>
+          <p>
+            ⏰ Automatic path mode in{" "}
+            {Math.ceil((10000 - (Date.now() % 10000)) / 1000)}s
+          </p>
+          <p>🖱️ Or scroll to start journey immediately</p>
+        </div>
+      )}
 
       {/* Control Buttons */}
       <div className="controls-container">
@@ -170,11 +219,7 @@ export default function EnhancedSpace({ initialCamera = [0, 0, 12] }) {
             : "Free Camera"}
         </button>
 
-        {cameraMode === "path" && (
-          <button className="control-button" onClick={togglePathVisualizer}>
-            {showPathVisualizer ? "Hide Path" : "Show Path"}
-          </button>
-        )}
+        
       </div>
 
       <style jsx>{`
@@ -209,6 +254,36 @@ export default function EnhancedSpace({ initialCamera = [0, 0, 12] }) {
 
         .control-button:active {
           transform: translateY(0);
+        }
+
+        .status-indicator {
+          position: absolute;
+          bottom: 120px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          border-radius: 12px;
+          padding: 15px 25px;
+          text-align: center;
+          color: white;
+          font-size: 14px;
+          z-index: 40;
+          animation: pulse 2s ease-in-out infinite alternate;
+        }
+
+        .status-indicator p {
+          margin: 5px 0;
+        }
+
+        @keyframes pulse {
+          from {
+            opacity: 0.8;
+          }
+          to {
+            opacity: 1;
+          }
         }
 
         @media (max-width: 768px) {
