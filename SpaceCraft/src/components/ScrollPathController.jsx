@@ -125,15 +125,16 @@ export default function ScrollPathController({
 
     // --- Camera Update ---
     const cam = cameraRef.current;
-    if (cam) {
-      // Position camera behind the ship, looking at it
-      const desiredCamPos = tmpVec3.current
-        .copy(position)
-        .addScaledVector(tangent, -15); // 15 units behind
-      desiredCamPos.y += 5; // 5 units above
+    if (cam && ship) {
+      const cameraOffset = tmpVec3.current
+        .set(0, 5, -15) // 15 units behind, 5 units above
+        .applyQuaternion(ship.quaternion);
+      const desiredCamPos = tmpVec3b.current
+        .copy(ship.position)
+        .add(cameraOffset);
 
       cam.position.lerp(desiredCamPos, lerpFactor);
-      cam.lookAt(position); // Look at the ship's position
+      cam.lookAt(ship.position);
     }
   });
 
